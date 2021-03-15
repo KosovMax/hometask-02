@@ -1,36 +1,61 @@
-const db = require('./db')
-const {v4:uuid} = require('uuid');
+const Contact = require('./schemas/contacts')
+const { ObjectID } = require('mongodb');
 
-const dbGetContacts = db.get('contacts');
 
-const getList = async () => {
-    return dbGetContacts.value();
+const getList = async (authId, {sortBy, sortByDesc, filter, limit = "2", offset = "0"}) => {
+//    const results = await Contact.find({owner: authId}).populate({
+//        path:'owner',
+//        select: 'email subscription -_id'
+//    })
+   const results = await Contact.paginate(
+       {owner: authId}, 
+            {
+                limit, 
+                offset,
+                sort: { 
+                    ...(sortBy ? { [`${sortBy}`]:1 } : {}), 
+                    ...(sortByDesc ? { [`${sortByDesc}`]:-1 } : {})
+                },
+                select:filter ? filter.split('|').join(' ') : '',
+                populate:{
+                    path: 'owner',
+                    select: 'email subscription -_id'
+                }
+            }
+       )
+    
+    const {docs: contacts, totalDocs: total} = results
+    return {total: total.toString(), limit, offset, contacts}
 }
 
-const getById = async (id) => {
-    return dbGetContacts.find({id}).value();
-}
-
-const remove = async (id) => {
-    const [record] = dbGetContacts.remove({id}).write();
-    return record;
+const getById = async (id, authId) => {
+    const result = await Contact.findOne({_id:id, owner: authId}).populate({
+        path:'owner',
+        select: 'email subscription -_id'
+    })
+    return result
 }
 
 const create = async (body) => {
-    const id = uuid();
-    const record = {
-        id, 
-        ...body
-    }
-    dbGetContacts.push(record).write();
-    return record;
+    console.log(body);
+    const result = await Contact.create(body)
+    return result
 }
 
-const update = async (id, body) => {
-    const record = dbGetContacts.find({id}).assign(body).value();
-    db.write();
+const update = async (id, body, authId) => {
+   
+    const result = await Contact.findByIdAndUpdate(
+        {_id:id, owner: authId},
+        {$set: body},
+        {new: true}
+    )
+    return result
+}
 
-    return record;
+const remove = async (id, authId) => {
+
+    const result = await Contact.findByIdAndDelete({_id:id, owner: authId})
+    return result
 }
 
 module.exports = {
