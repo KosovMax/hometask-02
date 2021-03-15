@@ -1,36 +1,37 @@
-const db = require('./db')
-const {v4:uuid} = require('uuid');
+const Contact = require('./schemas/contacts')
+const { ObjectID } = require('mongodb');
 
-const dbGetContacts = db.get('contacts');
 
 const getList = async () => {
-    return dbGetContacts.value();
+   const results = await Contact.find({})
+//    console.log(results);
+    return results
 }
 
 const getById = async (id) => {
-    return dbGetContacts.find({id}).value();
-}
-
-const remove = async (id) => {
-    const [record] = dbGetContacts.remove({id}).write();
-    return record;
+    const result = await Contact.findOne({_id:id})
+    return result
 }
 
 const create = async (body) => {
-    const id = uuid();
-    const record = {
-        id, 
-        ...body
-    }
-    dbGetContacts.push(record).write();
-    return record;
+    const result = await Contact.create(body)
+    return result
 }
 
 const update = async (id, body) => {
-    const record = dbGetContacts.find({id}).assign(body).value();
-    db.write();
+   
+    const result = await Contact.findByIdAndUpdate(
+        {_id:id},
+        {$set: body},
+        {new: true}
+    )
+    return result
+}
 
-    return record;
+const remove = async (id) => {
+
+    const result = await Contact.findByIdAndDelete({_id:id})
+    return result
 }
 
 module.exports = {
