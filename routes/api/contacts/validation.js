@@ -13,6 +13,10 @@ const schemaUpdateContact = Joi.object({
     phone: myCustomJoi.string().phoneNumber({ defaultCountry: 'UA', format: 'international' })
 })
 
+const schemaIdContact = Joi.object({
+    id: Joi.string().required(),
+})  
+
 // const schemaCreateContact = Joi.object({
 //     name: Joi.string().alphanum().min(4).max(50).optional(),
 //     email: Joi.string().email({ minDomainSegments: 2, tlds: { allow: ['com', 'net'] } }),
@@ -38,4 +42,9 @@ module.exports.createContact = (req, res, next) =>{
 
 module.exports.updateContact = (req, res, next) =>{
     return validate(schemaUpdateContact, req.body, next)
+}
+
+module.exports.idContact = (req, res, next) =>{
+    // console.log(req.query, req.params);
+    return validate(schemaIdContact, req.params, next)
 }
