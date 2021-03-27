@@ -107,5 +107,4 @@ router.put('/:id', validate.updateContact, async (req, res, next) => {
     next(e);
   }
 })
-
 module.exports = router
